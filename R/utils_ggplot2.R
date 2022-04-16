@@ -1,6 +1,115 @@
 # This file contains helper functions copied from ggplot2.
 
+GeomDensity2dFilled <- ggproto("GeomDensity2dFilled", GeomPolygon)
 GeomContourFilled <- ggproto("GeomContourFilled", GeomPolygon)
+geom_spoke <- function(mapping = NULL, data = NULL,
+                       stat = "identity", position = "identity",
+                       ...,
+                       na.rm = FALSE,
+                       show.legend = NA,
+                       inherit.aes = TRUE) {
+  layer(
+    data = data,
+    mapping = mapping,
+    geom = GeomSpoke,
+    stat = stat,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(
+      na.rm = na.rm,
+      ...
+    )
+  )
+}
+GeomCurve <- ggproto("GeomCurve", GeomSegment,
+                     default_aes = aes(colour = "black", size = 0.5, linetype = 1, alpha = NA),
+                     draw_panel = function(data, panel_params, coord, curvature = 0.5, angle = 90,
+                                           ncp = 5, arrow = NULL, arrow.fill = NULL, lineend = "butt", na.rm = FALSE) {
+
+                       if (!coord$is_linear()) {
+                         warn("geom_curve is not implemented for non-linear coordinates")
+                       }
+
+                       trans <- coord$transform(data, panel_params)
+
+                       arrow.fill <- arrow.fill %||% trans$colour
+
+                       curveGrob(
+                         trans$x, trans$y, trans$xend, trans$yend,
+                         default.units = "native",
+                         curvature = curvature, angle = angle, ncp = ncp,
+                         square = FALSE, squareShape = 1, inflect = FALSE, open = TRUE,
+                         gp = gpar(
+                           col = alpha(trans$colour, trans$alpha),
+                           fill = alpha(arrow.fill, trans$alpha),
+                           lwd = trans$size * .pt,
+                           lty = trans$linetype,
+                           lineend = lineend),
+                         arrow = arrow
+                       )
+                     }
+)
+GeomHex <- ggproto("GeomHex", Geom,
+                   draw_group = function(data, panel_params, coord, lineend = "butt",
+                                         linejoin = "mitre", linemitre = 10) {
+                     if (empty(data)) {
+                       return(zeroGrob())
+                     }
+
+                     # Get hex sizes
+                     if (!is.null(data$width)) {
+                       dx <- data$width[1] / 2
+                     } else {
+                       dx <- resolution(data$x, FALSE)
+                     }
+                     # Adjust for difference in width and height of regular hexagon. 1.15 adjusts
+                     # for the effect of the overlapping range in y-direction on the resolution
+                     # calculation
+                     if (!is.null(data$height)) {
+                       dy <- data$height[1] /  sqrt(3) / 2
+                     } else {
+                       dy <- resolution(data$y, FALSE) / sqrt(3) / 2 * 1.15
+                     }
+
+                     hexC <- hexbin::hexcoords(dx, dy, n = 1)
+
+                     n <- nrow(data)
+
+                     data <- data[rep(seq_len(n), each = 6), ]
+                     data$x <- rep.int(hexC$x, n) + data$x
+                     data$y <- rep.int(hexC$y, n) + data$y
+
+                     coords <- coord$transform(data, panel_params)
+
+                     ggname("geom_hex", polygonGrob(
+                       coords$x, coords$y,
+                       gp = gpar(
+                         col = coords$colour,
+                         fill = alpha(coords$fill, coords$alpha),
+                         lwd = coords$size * .pt,
+                         lty = coords$linetype,
+                         lineend = lineend,
+                         linejoin = linejoin,
+                         linemitre = linemitre
+                       ),
+                       default.units = "native",
+                       id.lengths = rep.int(6, n)
+                     ))
+                   },
+
+                   required_aes = c("x", "y"),
+
+                   default_aes = aes(
+                     colour = NA,
+                     fill = "grey50",
+                     size = 0.5,
+                     linetype = 1,
+                     alpha = NA
+                   ),
+
+                   draw_key = draw_key_polygon
+)
 
 # from ggplot2 utilities.R
 split_with_index <- function(x, f, n = max(f)) {
