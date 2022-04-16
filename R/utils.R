@@ -35,8 +35,6 @@ dapply <- function(df, by, fun, ..., drop = TRUE) {
   }))
 }
 
-
-
 # Include parameters
 #' @include ipar.R
 

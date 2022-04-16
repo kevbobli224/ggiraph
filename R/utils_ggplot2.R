@@ -1,5 +1,7 @@
 # This file contains helper functions copied from ggplot2.
 
+GeomContourFilled <- ggproto("GeomContourFilled", GeomPolygon)
+
 # from ggplot2 utilities.R
 split_with_index <- function(x, f, n = max(f)) {
   if (n == 1) return(list(x))
