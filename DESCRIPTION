@@ -22,7 +22,7 @@ Copyright: See file COPYRIGHTS.
 Encoding: UTF-8
 SystemRequirements: C++11, libpng
 Imports:
-    grid, ggplot2 (>= 3.3.5),
+    grid, ggplot2 (>= 3.1.1),
     htmlwidgets (>= 1.5),
     stats,
     htmltools,
